@@ -101,7 +101,8 @@ class TLDetector(object):
 
         """
         #TODO implement
-        return 0
+        closest_idx = self.waypoint_tree.query([pose.x, pose.y], 1)[1]
+        return closest_idx
 
     def get_light_state(self, light):
         """Determines the current color of the traffic light
@@ -113,14 +114,17 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        if(not self.has_image):
-            self.prev_light_loc = None
-            return False
+        #if(not self.has_image):
+        #    self.prev_light_loc = None
+        #    return False
 
-        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+        #cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
         #Get classification
-        return self.light_classifier.get_classification(cv_image)
+        #return self.light_classifier.get_classification(cv_image)
+
+        # TEST Without classifier
+        return light.state
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -132,13 +136,25 @@ class TLDetector(object):
 
         """
         light = None
+        line_wp_idx = None
 
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
         if(self.pose):
-            car_position = self.get_closest_waypoint(self.pose.pose)
+            car_wp_idx = self.get_closest_waypoint(self.pose.pose)
 
-        #TODO find the closest visible traffic light (if one exists)
+            #TODO find the closest visible traffic light (if one exists)
+            diff = len(self.waypoints.waypoints)
+            for i, light in enumerate(self.lights):
+                # Get stop waypoint index
+                line = stop_line_positions[i]
+                temp_wp_idx = self.get_closest_waypoint(line[0], line[1])
+                # Find closest stop line waypoint index
+                d = temp_wp_idx - car_wp_idx
+                if d>= 0 and d<diff:
+                    diff = d
+                    closest_light = light
+                    line_wp_idx = temp_wp_idx
 
         if light:
             state = self.get_light_state(light)

@@ -42,10 +42,10 @@ class WaypointUpdater(object):
         self.base_waypoints = None
         self.waypoints_2d = None
         self.waypoint_tree = None
-        
+
         self.loop()
         # rospy.spin()
-        
+
     def loop(self):
     	rate = rospy.Rate(50)
     	while not rospy.is_shutdown():
@@ -86,7 +86,8 @@ class WaypointUpdater(object):
         # TODO: Implement
         self.base_waypoints = waypoints
         if not self.waypoints_2d:
-        	self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
+        	self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y]
+            for waypoint in waypoints.waypoints]
         	self.waypoint_tree = KDTree(self.waypoints_2d)
 
     def traffic_cb(self, msg):
