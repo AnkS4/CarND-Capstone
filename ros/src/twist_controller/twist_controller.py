@@ -52,7 +52,7 @@ class Controller(object):
         self.last_v = current_v
 
         current_time = rospy.get_time()
-        sample_time = current_time - last_time
+        sample_time = current_time - self.last_time
         self.last_time = current_time
 
         throttle = self.throttle_controller.step(v_error, sample_time)
