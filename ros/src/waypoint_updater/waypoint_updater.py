@@ -5,6 +5,7 @@ from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 from scipy.spatial import KDTree
 import numpy as np
+from std_msgs.msg import Int32
 
 import math
 
@@ -23,7 +24,7 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 70 # Number of waypoints we will publish. You can change this number
 
 
 class WaypointUpdater(object):
@@ -34,6 +35,7 @@ class WaypointUpdater(object):
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
+        rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
 
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
@@ -45,12 +47,12 @@ class WaypointUpdater(object):
         self.waypoint_tree = None
 
         self.loop()
-        # rospy.spin()
+#         rospy.spin()
 
     def loop(self):
     	rate = rospy.Rate(50)
     	while not rospy.is_shutdown():
-    		if self.pose and self.base_waypoints:
+    		if self.pose and self.waypoint_tree:
     			closest_waypoint_idx = self.get_closest_waypoint_idx()
     			self.publish_waypoints(closest_waypoint_idx)
     		rate.sleep()
@@ -59,6 +61,7 @@ class WaypointUpdater(object):
     	x = self.pose.pose.position.x
     	y = self.pose.pose.position.y
     	closest_idx = self.waypoint_tree.query([x, y], 1)[1]
+
 
     	closest_coord = self.waypoints_2d[closest_idx]
     	prev_coord = self.waypoints_2d[closest_idx - 1]
@@ -84,7 +87,6 @@ class WaypointUpdater(object):
         self.pose = msg
 
     def waypoints_cb(self, waypoints):
-        # TODO: Implement
         self.base_waypoints = waypoints
         if not self.waypoints_2d:
         	self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y]
