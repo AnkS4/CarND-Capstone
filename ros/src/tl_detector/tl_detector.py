@@ -58,7 +58,7 @@ class TLDetector(object):
         self.pose = msg
 
     def waypoints_cb(self, waypoints):
-        self.base_waypoints = waypoints
+        self.waypoints = waypoints
         if not self.waypoints_2d:
         	self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y]
             for waypoint in waypoints.waypoints]
@@ -97,7 +97,7 @@ class TLDetector(object):
             self.upcoming_red_light_pub.publish(Int32(self.last_wp))
         self.state_count += 1
 
-    def get_closest_waypoint(self, pose):
+    def get_closest_waypoint(self, x,y):
         """Identifies the closest path waypoint to the given position
             https://en.wikipedia.org/wiki/Closest_pair_of_points_problem
         Args:
@@ -108,7 +108,7 @@ class TLDetector(object):
 
         """
         #TODO implement
-        closest_idx = self.waypoint_tree.query([pose.x, pose.y], 1)[1]
+        closest_idx = self.waypoint_tree.query([x,y], 1)[1]
         return closest_idx
 
     def get_light_state(self, light):
@@ -147,8 +147,8 @@ class TLDetector(object):
 
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
-        if(self.pose):
-            car_wp_idx = self.get_closest_waypoint(self.pose.pose)
+        if self.pose:
+            car_wp_idx = self.get_closest_waypoint(self.pose.pose.position.x, self.pose.pose.position.y)
 
             #TODO find the closest visible traffic light (if one exists)
             diff = len(self.waypoints.waypoints)
@@ -165,8 +165,8 @@ class TLDetector(object):
 
         if light:
             state = self.get_light_state(light)
-            return light_wp, state
-        self.waypoints = None
+            return line_wp_idx, state
+#         self.waypoints = None
         return -1, TrafficLight.UNKNOWN
 
 if __name__ == '__main__':
