@@ -60,11 +60,13 @@ class WaypointUpdater(object):
     		if self.pose and self.waypoint_tree:
     			closest_waypoint_idx = self.get_closest_waypoint_idx()
     			self.publish_waypoints(closest_waypoint_idx)
+#                 self.publish_waypoints()
     		rate.sleep()
 
     def get_closest_waypoint_idx(self):
     	x = self.pose.pose.position.x
     	y = self.pose.pose.position.y
+
     	closest_idx = self.waypoint_tree.query([x, y], 1)[1]
 
 
@@ -86,11 +88,14 @@ class WaypointUpdater(object):
     # 	lane.header = self.base_waypoints.header
     # 	lane.waypoints = self.base_waypoints.waypoints[closest_idx:closest_idx+LOOKAHEAD_WPS]
     # 	self.final_waypoints_pub.publish(lane)
-    def publish_waypoints(self):
-        final_lane = self.generate_lane()
+   
+    
+    
+    def publish_waypoints(self, index):
+        final_lane = self.generate_lane(index)
         self.final_waypoints_pub.publish(final_lane)
 
-    def generate_lane(self):
+    def generate_lane(self, closest_idx):
         lane = Lane()
 
         closest_idx = self.get_closest_waypoint_idx()
@@ -98,7 +103,7 @@ class WaypointUpdater(object):
         base_waypoints = self.base_lane.waypoints[closest_idx:farthest_idx]
 
         if self.stopline_wp_idx == -1 or (self.stopline_wp_idx >= farthest_idx):
-            lane.waypoints = base.waypoints
+            lane.waypoints = base_waypoints
         else:
             lane.waypoints = self.decelerate_waypoints(base_waypoints, closest_idx)
             
@@ -114,7 +119,7 @@ class WaypointUpdater(object):
             stop_idx = max(self.stopline_wp_idx - closest_idx - 2, 0) #Two waypoints back from line so front car stops at line
             dist = self.distance(waypoints, i, stop_idx)
             vel = math.sqrt(2 * MAX_DECEL * dist)
-            if < 1.0:
+            if vel < 1.0:
                 vel = 0.0
 
             p.twist.twist.linear.x = min(vel, wp.twist.twist.linear.x)
@@ -129,7 +134,7 @@ class WaypointUpdater(object):
         self.pose = msg
 
     def waypoints_cb(self, waypoints):
-        self.base_waypoints = waypoints
+        self.base_lane = waypoints
         if not self.waypoints_2d:
         	self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y]
             for waypoint in waypoints.waypoints]
