@@ -58,15 +58,13 @@ class WaypointUpdater(object):
     	rate = rospy.Rate(50)
     	while not rospy.is_shutdown():
     		if self.pose and self.waypoint_tree:
-    			closest_waypoint_idx = self.get_closest_waypoint_idx()
-    			self.publish_waypoints(closest_waypoint_idx)
-#                 self.publish_waypoints()
+    			#closest_waypoint_idx = self.get_closest_waypoint_idx()
+    			self.publish_waypoints()
     		rate.sleep()
 
     def get_closest_waypoint_idx(self):
     	x = self.pose.pose.position.x
     	y = self.pose.pose.position.y
-
     	closest_idx = self.waypoint_tree.query([x, y], 1)[1]
 
 
@@ -88,14 +86,11 @@ class WaypointUpdater(object):
     # 	lane.header = self.base_waypoints.header
     # 	lane.waypoints = self.base_waypoints.waypoints[closest_idx:closest_idx+LOOKAHEAD_WPS]
     # 	self.final_waypoints_pub.publish(lane)
-   
-    
-    
-    def publish_waypoints(self, index):
-        final_lane = self.generate_lane(index)
+    def publish_waypoints(self):
+        final_lane = self.generate_lane()
         self.final_waypoints_pub.publish(final_lane)
 
-    def generate_lane(self, closest_idx):
+    def generate_lane(self):
         lane = Lane()
 
         closest_idx = self.get_closest_waypoint_idx()
