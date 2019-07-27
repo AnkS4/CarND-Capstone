@@ -15,9 +15,9 @@ class Controller(object):
         # Controllers
         self.yaw_controller = YawController(wheel_base, steer_ratio, 0.1, max_lat_accel, max_steer_angle)
 
-        kp = 0.3
+        kp = 0.5
         ki = 0.1
-        kd = 0.0
+        kd = 0.01
         mn = 0.0 # Minimum Throttle Value
         mx = 0.2 # Maximum Throttle Value
         self.throttle_controller = PID(kp, ki, kd, mn, mx)
@@ -59,11 +59,14 @@ class Controller(object):
         self.last_time = current_time
 
         throttle = self.throttle_controller.step(vel_error, sample_time)
+        # If linear velocity is lesser than 5 MPH decrease the throttle
+        if linear_vel < 5 * ONE_MPH:
+            throttle = throttle / 3.
         brake = 0
 
         if linear_vel == 0.0 and current_vel < 0.1:
         	throttle = 0
-        	brake = 400 #700 To hold the car in place
+        	brake = 400. #700 To hold the car in place
 
         elif throttle < 0.1 and vel_error < 0:
             throttle = 0
