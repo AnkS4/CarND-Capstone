@@ -2,12 +2,14 @@ from styx_msgs.msg import TrafficLight
 import tensorflow as tf
 import numpy as np
 import datetime
+import os
 
 class TLClassifier(object):
     def __init__(self):
         #load classifier
-        graph_path = 'data/model/saved_model.pb'
-        
+        cwd = os.getcwd()
+        graph_path = cwd + '/light_classification/model/saved_model.pb'
+
         self.graph = tf.Graph()
         self.threshold = 0.5
 
@@ -38,7 +40,7 @@ class TLClassifier(object):
         with self.graph.as_default():
             img_expand = np.expand_dims(image, axis=0)
             start = datetime.datetime.now()
-            (boxes, scores, classes, num_detections) = self.sess.run([self.boxes, self.scores, self.classes, self.num_detections], 
+            (boxes, scores, classes, num_detections) = self.sess.run([self.boxes, self.scores, self.classes, self.num_detections],
             feed_dict={self.image_tensor: img_expand})
             end = datetime.datetime.now()
             c = end-start
