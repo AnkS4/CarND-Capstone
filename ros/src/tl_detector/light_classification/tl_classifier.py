@@ -2,30 +2,33 @@ from styx_msgs.msg import TrafficLight
 import tensorflow as tf
 import numpy as np
 import datetime
-import os
+
+USE_CLASSIFIER = False
 
 class TLClassifier(object):
     def __init__(self):
-        #load classifier
-        cwd = os.getcwd()
-        graph_path = cwd + '/light_classification/model/saved_model.pb'
+        if (USE_CLASSIFIER == True):
+            #load classifier
+            graph_path = r'light_classification/model/frozen_inference_graph.pb'
 
-        self.graph = tf.Graph()
-        self.threshold = 0.5
+            self.graph = tf.Graph()
+            self.threshold = 0.5
+            print graph_path
+            with self.graph.as_default():
+                od_graph_def = tf.GraphDef()
+                with tf.gfile.GFile(graph_path, 'rb') as fid:
+                    od_graph_def.ParseFromString(fid.read())
+                    tf.import_graph_def(od_graph_def, name='')
 
-        with self.graph.as_default():
-            od_graph_def = tf.GraphDef()
-            with tf.gfile.GFile(graph_path, 'rb') as fid:
-                od_graph_def.ParseFromString(fid.read())
-                tf.import_graph_def(od_graph_def, name='')
+                self.image_tensor = self.graph.get_tensor_by_name('image_tensor:0')
+                self.boxes = self.graph.get_tensor_by_name('detection_boxes:0')
+                self.scores = self.graph.get_tensor_by_name('detection_scores:0')
+                self.classes = self.graph.get_tensor_by_name('detection_classes:0')
+                self.num_detections = self.graph.get_tensor_by_name('num_detections:0')
 
-            self.image_tensor = self.graph.get_tensor_by_name('image_tensor:0')
-            self.boxes = self.graph.get_tensor_by_name('detection_boxes:0')
-            self.scores = self.graph.get_tensor_by_name('detection_scores:0')
-            self.classes = self.graph.get_tensor_by_name('detection_classes:0')
-            self.num_detections = self.graph.get_tensor_by_name('num_detections:0')
-
-        self.sess = tf.Session(graph=self.graph)
+            self.sess = tf.Session(graph=self.graph)
+        else:
+            pass
 
     def get_classification(self, image):
         """Determines the color of the traffic light in the image
@@ -37,34 +40,35 @@ class TLClassifier(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        with self.graph.as_default():
-            img_expand = np.expand_dims(image, axis=0)
-            start = datetime.datetime.now()
-            (boxes, scores, classes, num_detections) = self.sess.run([self.boxes, self.scores, self.classes, self.num_detections],
-            feed_dict={self.image_tensor: img_expand})
-            end = datetime.datetime.now()
-            c = end-start
-            print(c.total_seconds())
+        if (USE_CLASSIFIER == True):
+            with self.graph.as_default():
+                img_expand = np.expand_dims(image, axis=0)
+                start = datetime.datetime.now()
+                (boxes, scores, classes, num_detections) = self.sess.run([self.boxes, self.scores, self.classes, self.num_detections], 
+                feed_dict={self.image_tensor: img_expand})
+                end = datetime.datetime.now()
+                c = end-start
+                print(c.total_seconds())
 
-        boxes = np.squeeze(boxes)
-        scores = np.squeeze(scores)
-        classes = np.squeeze(classes).astype(np.int32)
+            boxes = np.squeeze(boxes)
+            scores = np.squeeze(scores)
+            classes = np.squeeze(classes).astype(np.int32)
 
-        print('Scores: ', scores[0])
-        print('Classes: ', classes[0])
+            print('Scores: ', scores[0])
+            print('Classes: ', classes[0])
 
-        if scores[0] > self.threshold:
-            if classes[0] == 1:
-                print('GREEN')
-                return TrafficLight.GREEN
+            if scores[0] > self.threshold:
+                if classes[0] == 1:
+                    print('GREEN')
+                    return TrafficLight.GREEN
 
-            elif classes[0] == 2:
-                print('RED')
-                return TrafficLight.RED
+                elif classes[0] == 2:
+                    print('RED')
+                    return TrafficLight.RED
 
-            elif classes[0] == 3:
-                print('YELLOW')
-                return TrafficLight.YELLOW
+                elif classes[0] == 3:
+                    print('YELLOW')
+                    return TrafficLight.YELLOW
 
 
         return TrafficLight.UNKNOWN
