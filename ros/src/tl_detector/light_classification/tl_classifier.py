@@ -6,7 +6,7 @@ import datetime
 class TLClassifier(object):
     def __init__(self):
         #load classifier
-        graph_path = 'data/model/frozen_inference_graph.pb'
+        graph_path = 'data/model/saved_model.pb'
         
         self.graph = tf.Graph()
         self.threshold = 0.5
