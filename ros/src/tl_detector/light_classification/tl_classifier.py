@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 import datetime
 
-USE_CLASSIFIER = False
+USE_CLASSIFIER = True
 
 class TLClassifier(object):
     def __init__(self):
