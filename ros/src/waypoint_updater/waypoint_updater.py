@@ -32,12 +32,12 @@ class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
 
+   		#self.base_waypoints = None
         self.base_lane = None
         self.pose = None
         self.stopline_wp_idx = -1
         self.waypoints_2d = None
         self.waypoint_tree = None
-
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -48,13 +48,13 @@ class WaypointUpdater(object):
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
-        #self.base_waypoints = None
+
+
 
         self.loop()
-#         rospy.spin()
 
     def loop(self):
-    	rate = rospy.Rate(50)
+        rate = rospy.Rate(30)
     	while not rospy.is_shutdown():
     		if self.pose and self.waypoint_tree:
     			#closest_waypoint_idx = self.get_closest_waypoint_idx()
@@ -80,18 +80,13 @@ class WaypointUpdater(object):
     		closest_idx = (closest_idx + 1) % len(self.waypoints_2d)
     	return closest_idx
 
-    # def publish_waypoints(self, closest_idx):
-    # 	lane = Lane()
-    # 	lane.header = self.base_waypoints.header
-    # 	lane.waypoints = self.base_waypoints.waypoints[closest_idx:closest_idx+LOOKAHEAD_WPS]
-    # 	self.final_waypoints_pub.publish(lane)
     def publish_waypoints(self):
         final_lane = self.generate_lane()
         self.final_waypoints_pub.publish(final_lane)
 
     def generate_lane(self):
         lane = Lane()
-
+        
         closest_idx = self.get_closest_waypoint_idx()
         farthest_idx = closest_idx + LOOKAHEAD_WPS
         base_waypoints = self.base_lane.waypoints[closest_idx:farthest_idx]
@@ -110,7 +105,7 @@ class WaypointUpdater(object):
             p = Waypoint()
             p.pose = wp.pose
 
-            stop_idx = max(self.stopline_wp_idx - closest_idx - 2, 0) #Two waypoints back from line so front car stops at line
+            stop_idx = max(self.stopline_wp_idx - closest_idx - 3, 0) #Two waypoints back from line so front car stops at line
             dist = self.distance(waypoints, i, stop_idx)
             vel = math.sqrt(2 * MAX_DECEL * dist)
             if vel < 1.0:
@@ -134,7 +129,6 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
-        #pass
         self.stopline_wp_idx = msg.data
 
     def obstacle_cb(self, msg):

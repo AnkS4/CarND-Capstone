@@ -1,4 +1,3 @@
-import rospy
 from lowpass import LowPassFilter
 from yaw_controller import YawController
 import rospy
@@ -14,17 +13,17 @@ class Controller(object):
         # Controllers
         self.yaw_controller = YawController(wheel_base, steer_ratio, 0.1, max_lat_accel, max_steer_angle)
 
-        kp = 0.3 # .3
+        kp = 0.3 
         ki = 0.1
-        kd = 0
+        kd = 0.0
         mn = 0.0 # Minimum Throttle Value
         mx = 0.2 # Maximum Throttle Value
         self.throttle_controller = PID(kp, ki, kd, mn, mx)
 
         # Low Pass Filter
         tau = 0.5  # 1/(2pi/tau), cutoff frequency
-        ts =  0.02 # 0.2, Sample time
-        self.lpf_v = LowPassFilter(tau, ts)
+        ts =  0.02 # Sample time
+        self.vel_lpf = LowPassFilter(tau, ts)
 
         # Vehicle Parameters
         self.vehicle_mass=vehicle_mass
@@ -42,12 +41,13 @@ class Controller(object):
 
     def control(self, current_vel, dbw_enabled, linear_vel, angular_vel):
         # Return throttle, brake, steer
+		
         if not dbw_enabled:
         	self.throttle_controller.reset()
         	return 0.0, 0.0, 0.0
 
-        current_vel = self.lpf_v.filt(current_vel)
-
+        current_vel = self.vel_lpf.filt(current_vel)
+		
         steering = self.yaw_controller.get_steering(linear_vel, angular_vel, current_vel)
 
         vel_error = linear_vel - current_vel
@@ -66,11 +66,11 @@ class Controller(object):
         # Stop the car if linear velocity is lesser than 0.1 m/s
         if linear_vel == 0.0 and current_vel < 0.1:
         	throttle = 0
-        	brake = 700. #400 To hold the car in place
+        	brake = 400. #400 To hold the car in place
 
         elif throttle < 0.1 and vel_error < 0:
             throttle = 0
             decel = max(vel_error, self.decel_limit)
-            brake = abs(decel) * self.vehicle_mass * self.wheel_radius
+            brake = abs(decel) * self.vehicle_mass * self.wheel_radius # Torque N*m
 
         return throttle, brake, steering
