@@ -66,7 +66,7 @@ class Controller(object):
         # Stop the car if linear velocity is lesser than 0.1 m/s
         if linear_vel == 0.0 and current_vel < 0.1:
         	throttle = 0
-        	brake = 400. #400 To hold the car in place
+        	brake = 700. #400 To hold the car in place
 
         elif throttle < 0.1 and vel_error < 0:
             throttle = 0
