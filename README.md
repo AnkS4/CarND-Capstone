@@ -1,3 +1,21 @@
+### Submission of Capstone-Project
+
+Team: Night walkers
+
+Project Members:
+Christian Pfaffenzeller		christian.pfaffenzeller@googlemail.com
+Habib Paracha				habib.paracha786@gmail.com	
+Jingyi Chen					fynnasher@gmail.com		
+Aniket Satbhai				anks@tuta.io	
+Hyun-Gyu Jeon				hgj101@Hotmail.com
+
+
+The whole project was implemented according to the tutorials from Udacity.
+For the traffic light classification, the tutorial and dataset from alex-lechner was used.
+The trained traffic light classifier works on images of the simulator and real world images.
+
+
+
 ### System Architecture Diagram
 
 Below is the ROS system architecture of this project:
